@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREP// — AI Interview Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TOKENS ─────────────────────────────────────────────────────── */
+:root {
+  --bg-0:        #07090f;
+  --bg-1:        #0d1018;
+  --bg-card:     #111520;
+  --bg-input:    #0a0d16;
+  --border:      #1e2435;
+  --border-hi:   #2a3550;
+  --accent:      #f0a030;
+  --accent-dim:  #7a5218;
+  --accent-glow: rgba(240,160,48,.12);
+  --txt-1:       #e8ecf0;
+  --txt-2:       #6b7a94;
+  --txt-3:       #3d4a60;
+  --green:       #00c47a;
+  --red:         #ff4d6d;
+  --blue:        #3d8fff;
+  --mono:        'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  --sans:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --r:           4px;
+  --r-lg:        8px;
+}
+
+/* ── BASE ────────────────────────────────────────────────────────── */
+body {
+  background: var(--bg-0);
+  color: var(--txt-1);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-0); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+/* ── LAYOUT ──────────────────────────────────────────────────────── */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* ── HEADER ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.logo { display: flex; align-items: baseline; gap: 12px; }
+
+.logo-mark {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--txt-2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ── SETTINGS ────────────────────────────────────────────────────── */
+.settings-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--txt-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+  letter-spacing: .5px;
+}
+.settings-toggle:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+.settings-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.settings-panel.open { display: block; }
+
+.settings-note {
+  color: var(--txt-2);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* ── SECTION LABEL ───────────────────────────────────────────────── */
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--txt-2);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* ── FORMS ───────────────────────────────────────────────────────── */
+.form-section { margin-bottom: 48px; }
+
+.form-grid { display: grid; gap: 16px; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--txt-2);
+  letter-spacing: .5px;
+}
+.form-label .opt { color: var(--txt-3); }
+
+.form-control {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--txt-1);
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 10px 12px;
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  width: 100%;
+}
+.form-control:focus {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.form-control::placeholder { color: var(--txt-3); }
+textarea.form-control { resize: vertical; min-height: 100px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+  border: none;
+}
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover:not(:disabled) { background: #ffb840; }
+.btn-primary:disabled { background: var(--accent-dim); color: #444; cursor: not-allowed; }
+
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--txt-2);
+}
+.btn-ghost:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+
+/* ── LOADING ─────────────────────────────────────────────────────── */
+.loading-bar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  color: var(--txt-2);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.loading-bar.on { display: flex; }
+
+.spinner {
+  width: 14px; height: 14px;
+  border: 1px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── GUIDE SECTION ───────────────────────────────────────────────── */
+#guide-section { display: none; }
+#guide-section.on { display: block; }
+
+.guide-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+.guide-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--txt-1);
+}
+
+.guide-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--txt-2);
+  margin-top: 4px;
+}
+
+.guide-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ── COLLAPSIBLE CARDS ───────────────────────────────────────────── */
+.cards { display: flex; flex-direction: column; gap: 8px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--border-hi); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+}
+.card-header:hover { background: rgba(255,255,255,.02); }
+
+.card-header-left { display: flex; align-items: center; gap: 10px; }
+
+.card-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--txt-1);
+}
+
+.card-chevron {
+  color: var(--txt-3);
+  font-size: 11px;
+  transition: transform .2s;
+}
+.card.open .card-chevron { transform: rotate(180deg); }
+
+.card-body {
+  display: none;
+  padding: 16px 18px 20px;
+  border-top: 1px solid var(--border);
+}
+.card.open .card-body { display: block; }
+
+/* ── MARKDOWN ────────────────────────────────────────────────────── */
+.md h1 { font-size: 17px; font-weight: 600; margin: 18px 0 8px; color: var(--txt-1); }
+.md h2 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; color: var(--txt-1); }
+.md h3 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  color: var(--accent);
+  margin: 16px 0 6px;
+  text-transform: uppercase;
+}
+.md p { margin: 8px 0; color: var(--txt-1); line-height: 1.75; }
+.md ul, .md ol { padding-left: 22px; margin: 8px 0; }
+.md li { margin: 5px 0; line-height: 1.7; }
+.md strong { color: #fff; font-weight: 600; }
+.md em { color: var(--txt-2); font-style: italic; }
+.md a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-dim);
+  transition: border-color .15s;
+}
+.md a:hover { border-color: var(--accent); }
+.md code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-1);
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--green);
+}
+.md pre {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.md pre code { background: none; padding: 0; }
+.md blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+  color: var(--txt-2);
+  margin: 10px 0;
+}
+.md hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* ── STREAM CURSOR ───────────────────────────────────────────────── */
+.streaming::after {
+  content: '▋';
+  color: var(--accent);
+  animation: blink .8s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── CHAT SECTION ────────────────────────────────────────────────── */
+#chat-section { display: none; margin-top: 48px; }
+#chat-section.on { display: block; }
+
+.chat-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.chat-top {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--txt-2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.chat-btns { display: flex; gap: 8px; }
+
+.chat-msgs {
+  height: 420px;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── MESSAGES ────────────────────────────────────────────────────── */
+.msg { display: flex; gap: 12px; }
+
+.msg-av {
+  width: 28px; height: 28px;
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .5px;
+}
+.msg.user .msg-av  { background: rgba(240,160,48,.15); color: var(--accent); }
+.msg.ai   .msg-av  { background: rgba(61,143,255,.15); color: var(--blue); }
+
+.msg-body { flex: 1; min-width: 0; }
+
+.msg-role {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--txt-3);
+  margin-bottom: 5px;
+}
+
+.msg-text {
+  color: var(--txt-1);
+  line-height: 1.75;
+  word-break: break-word;
+}
+/* re-use .md styles inside messages */
+.msg-text strong { color: #fff; font-weight: 600; }
+.msg-text em { color: var(--txt-2); }
+.msg-text a { color: var(--accent); }
+.msg-text code {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--bg-1); padding: 1px 6px;
+  border-radius: 3px; color: var(--green);
+}
+.msg-text ul, .msg-text ol { padding-left: 20px; margin: 6px 0; }
+.msg-text li { margin: 4px 0; }
+.msg-text p { margin: 6px 0; }
+.msg-text blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 12px; color: var(--txt-2); margin: 8px 0;
+}
+
+/* ── CHAT INPUT ──────────────────────────────────────────────────── */
+.chat-foot { border-top: 1px solid var(--border); padding: 14px 16px; }
+
+.chat-row { display: flex; gap: 10px; align-items: flex-end; }
+
+.chat-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--txt-1);
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 10px 12px;
+  resize: none;
+  outline: none;
+  min-height: 42px;
+  max-height: 160px;
+  line-height: 1.5;
+  transition: border-color .2s;
+}
+.chat-input:focus { border-color: var(--accent-dim); }
+.chat-input::placeholder { color: var(--txt-3); }
+
+.chat-send {
+  width: 42px; height: 42px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--r);
+  color: #000;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.chat-send:hover:not(:disabled) { background: #ffb840; }
+.chat-send:disabled { background: var(--accent-dim); cursor: not-allowed; }
+
+.chat-hints { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+
+.pill {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--txt-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+  white-space: nowrap;
+}
+.pill:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+/* ── DIVIDER ─────────────────────────────────────────────────────── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; display: none; }
+.divider.on { display: block; }
+
+/* ── TOAST ───────────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #160810;
+  border: 1px solid rgba(255,77,109,.3);
+  border-left: 3px solid var(--red);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #ff9aaa;
+  max-width: 380px;
+  z-index: 999;
+  display: none;
+  line-height: 1.5;
+}
+.toast.on { display: block; animation: slideUp .2s ease; }
+@keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ── RETRY BUTTON (inline) ───────────────────────────────────────── */
+.retry-btn {
+  display: inline-block;
+  margin-top: 10px;
+  background: none;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--r);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.retry-btn:hover { border-color: var(--accent); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .form-row { grid-template-columns: 1fr; }
+  .chat-msgs { height: 300px; }
+  .guide-header { flex-direction: column; }
+  .logo-sub { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-mark">PREP//</span>
+      <span class="logo-sub">AI Interview Intelligence</span>
+    </div>
+    <button class="settings-toggle" onclick="toggleSettings()">⚙&nbsp; API Key</button>
+  </header>
+
+  <!-- ── SETTINGS ── -->
+  <div class="settings-panel" id="settings-panel">
+    <div class="form-group">
+      <label class="form-label">ANTHROPIC API KEY</label>
+      <input type="password" class="form-control" id="api-key"
+             placeholder="sk-ant-api03-…"
+             style="font-family:var(--mono);letter-spacing:.5px;">
+    </div>
+    <p class="settings-note">Held in memory only — never stored or logged.</p>
+  </div>
+
+  <!-- ── INPUT ── -->
+  <section class="form-section" id="input-section">
+    <div class="section-label">Define Your Target</div>
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label class="form-label">JOB DESCRIPTION</label>
+        <textarea class="form-control" id="jd"
+                  placeholder="Paste the full job description or a URL to the posting…"
+                  style="min-height:140px;"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">COMPANY NAME</label>
+          <input type="text" class="form-control" id="company-name"
+                 placeholder="Acme Corp">
+        </div>
+        <div class="form-group">
+          <label class="form-label">INTERVIEWER NAME <span class="opt">(optional)</span></label>
+          <input type="text" class="form-control" id="iname"
+                 placeholder="Jane Smith">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">COMPANY CONTEXT <span class="opt">(optional)</span></label>
+          <textarea class="form-control" id="company-ctx"
+                    placeholder="LinkedIn URL, recent news, funding round, product info…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">INTERVIEWER CONTEXT <span class="opt">(optional)</span></label>
+          <textarea class="form-control" id="iname-ctx"
+                    placeholder="LinkedIn URL, title, role, background…"></textarea>
+        </div>
+      </div>
+
+    </div><!-- /form-grid -->
+
+    <div style="margin-top:24px;display:flex;align-items:center;gap:18px;">
+      <button class="btn btn-primary" id="gen-btn" onclick="generateGuide()">
+        Generate Prep Guide &nbsp;→
+      </button>
+      <div class="loading-bar" id="gen-loading">
+        <div class="spinner"></div>
+        <span id="gen-status">Analyzing role…</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" id="divider">
+
+  <!-- ── GUIDE ── -->
+  <section id="guide-section">
+    <div class="guide-header">
+      <div>
+        <div class="guide-title" id="guide-title">Interview Prep Guide</div>
+        <div class="guide-meta" id="guide-meta"></div>
+      </div>
+      <div class="guide-actions">
+        <button class="btn btn-ghost btn-sm" onclick="expandAll()">Expand All</button>
+        <button class="btn btn-ghost btn-sm" onclick="collapseAll()">Collapse</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetSession()">↺ Reset</button>
+      </div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ── CHAT ── -->
+  <section id="chat-section">
+    <div class="section-label" style="margin-bottom:16px;">AI Coaching Session</div>
+    <div class="chat-wrap">
+
+      <div class="chat-top">
+        <div class="chat-label">
+          <div class="live-dot"></div>
+          Live Session
+        </div>
+        <div class="chat-btns">
+          <button class="btn btn-ghost btn-sm" onclick="mockInterview()">Mock Interview</button>
+          <button class="btn btn-ghost btn-sm" onclick="pressureTest()">Pressure Test</button>
+        </div>
+      </div>
+
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg ai">
+          <div class="msg-av">AI</div>
+          <div class="msg-body">
+            <div class="msg-role">Coach</div>
+            <div class="msg-text">Your prep guide is ready. Ask me anything about this role, company, or interviewer — or start a mock interview.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-foot">
+        <div class="chat-row">
+          <textarea class="chat-input" id="chat-input"
+                    placeholder="Ask a follow-up, paste an answer for feedback…"
+                    rows="1"
+                    onkeydown="chatKey(event)"
+                    oninput="grow(this)"></textarea>
+          <button class="chat-send" id="chat-send" onclick="sendChat()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M1.5 7.5L13.5 1.5L8.5 7.5L13.5 13.5L1.5 7.5Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chat-hints">
+          <button class="pill" onclick="setInput('What are the biggest risks in this role?')">Biggest risks?</button>
+          <button class="pill" onclick="setInput('What questions should I ask the interviewer?')">Questions to ask</button>
+          <button class="pill" onclick="setInput('What salary range should I target for this role?')">Salary intel</button>
+          <button class="pill" onclick="setInput('What are common red flags in this type of interview?')">Red flags</button>
+          <button class="pill" onclick="setInput('Give me a 60-second elevator pitch for this role.')">Elevator pitch</button>
+        </div>
+      </div>
+    </div><!-- /chat-wrap -->
+  </section>
+
+</div><!-- /app -->
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   PLACEHOLDER — JS will be added in subsequent steps
+================================================================ */
+function toggleSettings() {
+  document.getElementById('settings-panel').classList.toggle('open');
+}
+function grow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+</script>
+</body>
+</html>
