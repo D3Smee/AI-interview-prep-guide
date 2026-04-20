@@ -995,7 +995,7 @@ async function generateGuide() {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         stream: true,
         messages: [{ role: 'user', content: guidePrompt(jd, company, companyCtx, iname, ictx) }],
@@ -1184,7 +1184,7 @@ async function sendChat() {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: systemPrompt(),
         messages: chatHistory,
@@ -1258,7 +1258,7 @@ function retryLastChat() {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1024,
           system: systemPrompt(),
           messages: chatHistory,
