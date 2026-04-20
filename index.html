@@ -986,14 +986,9 @@ async function generateGuide() {
   $('guide-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('http://localhost:3000/api/messages', {
       method: 'POST',
-      headers: {
-        'x-api-key': apiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true',
-        'content-type': 'application/json',
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
@@ -1175,14 +1170,9 @@ async function sendChat() {
   let   reply = '';
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('http://localhost:3000/api/messages', {
       method: 'POST',
-      headers: {
-        'x-api-key': apiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true',
-        'content-type': 'application/json',
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
@@ -1249,14 +1239,9 @@ function retryLastChat() {
     const msgEl = $(msgId);
     let reply = '';
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('http://localhost:3000/api/messages', {
         method: 'POST',
-        headers: {
-          'x-api-key': apiKey(),
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-allow-browser': 'true',
-          'content-type': 'application/json',
-        },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 1024,
