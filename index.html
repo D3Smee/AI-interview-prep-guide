@@ -990,6 +990,7 @@ async function generateGuide() {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
+        apiKey: apiKey(),
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         stream: true,
@@ -1174,6 +1175,7 @@ async function sendChat() {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
+        apiKey: apiKey(),
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: systemPrompt(),
@@ -1243,6 +1245,7 @@ function retryLastChat() {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          apiKey: apiKey(),
           model: 'claude-sonnet-4-6',
           max_tokens: 1024,
           system: systemPrompt(),
