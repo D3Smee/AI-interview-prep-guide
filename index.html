@@ -1039,9 +1039,119 @@ function inline(t) {
   return t;
 }
 
+/* ── HISTORY ─────────────────────────────────────────────────── */
+const HIST_KEY = 'prep-history-v1';
+const HIST_MAX = 20;
+
+function histLoad() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function histSave(entries) {
+  localStorage.setItem(HIST_KEY, JSON.stringify(entries));
+}
+
+function histAdd(company, jd, guide) {
+  const entries = histLoad();
+  entries.unshift({
+    id: Date.now().toString(),
+    company,
+    role: jd.split('\n')[0].trim().slice(0, 80) || company,
+    date: new Date().toISOString(),
+    guide,
+    inputs: {
+      jd:          $('jd').value,
+      companyName: $('company-name').value,
+      companyCtx:  $('company-ctx').value,
+      iname:       $('iname').value,
+      ictx:        $('iname-ctx').value,
+    },
+  });
+  if (entries.length > HIST_MAX) entries.length = HIST_MAX;
+  histSave(entries);
+  renderHistBadge();
+}
+
+function histDelete(id) {
+  histSave(histLoad().filter(e => e.id !== id));
+  renderHistBadge();
+  renderHistList();
+}
+
+function histRestore(id) {
+  const entry = histLoad().find(e => e.id === id);
+  if (!entry) return;
+  closeHistory();
+
+  $('jd').value           = entry.inputs.jd          || '';
+  $('company-name').value = entry.inputs.companyName  || entry.company;
+  $('company-ctx').value  = entry.inputs.companyCtx   || '';
+  $('iname').value        = entry.inputs.iname        || '';
+  $('iname-ctx').value    = entry.inputs.ictx         || '';
+
+  guideText   = entry.guide;
+  chatHistory = [];
+
+  buildCards(entry.company);
+  $('guide-company').textContent = entry.company;
+  $('guide-meta').textContent    = formatDate(entry.date) + ' · Restored from history';
+  $('divider').classList.add('on');
+  $('guide-section').classList.add('on');
+  $('chat-section').classList.add('on');
+  renderSections(parseSections(entry.guide), false);
+
+  $('chat-msgs').innerHTML = `
+    <div class="msg ai">
+      <div class="msg-av">AI</div>
+      <div class="msg-body">
+        <div class="msg-role">Coach</div>
+        <div class="msg-text">Restored session for <strong>${esc(entry.company)}</strong>. Ask me anything or start a mock interview.</div>
+      </div>
+    </div>`;
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderHistBadge() {
+  const n = histLoad().length;
+  const badge = $('hist-badge');
+  badge.textContent = n;
+  badge.classList.toggle('on', n > 0);
+}
+
+function renderHistList() {
+  const entries = histLoad();
+  const list    = $('h-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="h-empty">No sessions yet</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => `
+    <div class="h-card" onclick="histRestore('${esc(e.id)}')">
+      <div class="h-card-company">${esc(e.company)}</div>
+      <div class="h-card-role">${esc(e.role)}</div>
+      <div class="h-card-foot">
+        <span class="h-card-date">${formatDate(e.date)}</span>
+        <button class="h-card-del"
+                onclick="event.stopPropagation();histDelete('${esc(e.id)}')"
+                title="Delete">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function openHistory() {
+  renderHistList();
+  $('h-panel').classList.add('on');
+  $('h-overlay').classList.add('on');
+}
+
+function closeHistory() {
+  $('h-panel').classList.remove('on');
+  $('h-overlay').classList.remove('on');
+}
+
 /* placeholder stubs — replaced in later stages */
-function openHistory() {}
-function closeHistory() {}
 function generateGuide() {}
 function expandAll() {}
 function collapseAll() {}
