@@ -903,10 +903,62 @@ textarea.field { resize: vertical; min-height: 110px; line-height: 1.65; }
 <div class="toast" id="toast"></div>
 
 <script>
-/* placeholder — JS added in subsequent stages */
-function toggleSettings() { document.getElementById('settings-panel').classList.toggle('on'); }
-function grow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
-function saveKey() {}
+/* ── STATE ───────────────────────────────────────────────────── */
+let guideText   = '';
+let chatHistory = [];
+let generating  = false;
+let chatting    = false;
+
+/* ── CORE UTILS ──────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+const apiKey = () => $('api-key').value.trim();
+
+function toggleSettings() {
+  $('settings-panel').classList.toggle('on');
+}
+
+function grow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+let _toastTimer;
+function toast(msg, ms = 5000) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('on'), ms);
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  }).toUpperCase();
+}
+
+/* ── API KEY PERSISTENCE ─────────────────────────────────────── */
+const KEY_STORE = 'prep-api-key';
+
+function saveKey() {
+  const val = apiKey();
+  if (val) localStorage.setItem(KEY_STORE, val);
+  else     localStorage.removeItem(KEY_STORE);
+}
+
+function loadSavedKey() {
+  const saved = localStorage.getItem(KEY_STORE);
+  if (saved) $('api-key').value = saved;
+}
+
+/* placeholder stubs — replaced in later stages */
 function openHistory() {}
 function closeHistory() {}
 function generateGuide() {}
@@ -915,9 +967,12 @@ function collapseAll() {}
 function resetSession() {}
 function sendChat() {}
 function chatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
-function setInput(t) { document.getElementById('chat-input').value = t; }
+function setInput(t) { $('chat-input').value = t; grow($('chat-input')); $('chat-input').focus(); }
 function mockInterview() {}
 function pressureTest() {}
+
+/* ── INIT ────────────────────────────────────────────────────── */
+loadSavedKey();
 </script>
 </body>
 </html>
