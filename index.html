@@ -740,5 +740,184 @@ textarea.field { resize: vertical; min-height: 110px; line-height: 1.65; }
 
 </style>
 </head>
-<body><!-- JS and HTML added in subsequent stages --></body>
+<body>
+
+<!-- ── HISTORY PANEL ───────────────────────────────── -->
+<div class="h-overlay" id="h-overlay" onclick="closeHistory()"></div>
+<aside class="h-panel" id="h-panel">
+  <div class="h-panel-top">
+    <span class="h-panel-title">Past Sessions</span>
+    <button class="h-close" onclick="closeHistory()">×</button>
+  </div>
+  <div class="h-list" id="h-list"></div>
+</aside>
+
+<!-- ── MAIN APP ────────────────────────────────────── -->
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-mark">Prep</span>
+      <span class="logo-rule"></span>
+      <span class="logo-sub">Interview Intelligence</span>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn" onclick="openHistory()">
+        History
+        <span class="hist-badge" id="hist-badge">0</span>
+      </button>
+      <button class="nav-btn" onclick="toggleSettings()">⚙ Key</button>
+    </nav>
+  </header>
+
+  <!-- SETTINGS -->
+  <div class="settings-panel" id="settings-panel">
+    <div class="form-group">
+      <label class="field-label">Anthropic API Key</label>
+      <input type="password" class="field" id="api-key"
+             placeholder="sk-ant-api03-…"
+             style="font-family:var(--mono);letter-spacing:.5px;"
+             oninput="saveKey()">
+    </div>
+    <p class="settings-note">Saved to this browser only — never sent anywhere except Anthropic's API.</p>
+  </div>
+
+  <!-- INPUT -->
+  <section class="form-section" id="input-section">
+    <div class="eyebrow">Define Your Target</div>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label class="field-label">Job Description</label>
+        <textarea class="field" id="jd"
+                  placeholder="Paste the full job description or a URL…"
+                  style="min-height:140px;"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">Company Name</label>
+          <input type="text" class="field" id="company-name" placeholder="Acme Corp">
+        </div>
+        <div class="form-group">
+          <label class="field-label">Interviewer Name <span class="opt">(optional)</span></label>
+          <input type="text" class="field" id="iname" placeholder="Jane Smith">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">Company Context <span class="opt">(optional)</span></label>
+          <textarea class="field" id="company-ctx"
+                    placeholder="LinkedIn URL, recent news, funding round…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Interviewer Context <span class="opt">(optional)</span></label>
+          <textarea class="field" id="iname-ctx"
+                    placeholder="LinkedIn URL, title, background…"></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div style="margin-top:26px;display:flex;align-items:center;gap:18px;">
+      <button class="btn btn-primary" id="gen-btn" onclick="generateGuide()">
+        Generate Brief &nbsp;→
+      </button>
+      <div class="loader" id="gen-loader">
+        <div class="spin"></div>
+        <span id="gen-status">Analyzing role…</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" id="divider">
+
+  <!-- GUIDE -->
+  <section id="guide-section">
+    <div class="guide-hd">
+      <div class="guide-hd-top">
+        <div>
+          <div class="guide-company" id="guide-company">—</div>
+          <div class="guide-meta" id="guide-meta"></div>
+        </div>
+        <div class="guide-actions">
+          <button class="btn btn-ghost btn-sm" onclick="expandAll()">Expand All</button>
+          <button class="btn btn-ghost btn-sm" onclick="collapseAll()">Collapse</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetSession()">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section id="chat-section">
+    <div class="eyebrow" style="margin-bottom:16px;">Coaching Session</div>
+    <div class="chat-wrap">
+      <div class="chat-top">
+        <div class="chat-label">
+          <div class="live-dot"></div>
+          Live Session
+        </div>
+        <div class="chat-btns">
+          <button class="btn btn-ghost btn-sm" onclick="mockInterview()">Mock Interview</button>
+          <button class="btn btn-ghost btn-sm" onclick="pressureTest()">Pressure Test</button>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg ai">
+          <div class="msg-av">AI</div>
+          <div class="msg-body">
+            <div class="msg-role">Coach</div>
+            <div class="msg-text">Your brief is ready. Ask me anything about this role, company, or interviewer — or start a mock interview.</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-foot">
+        <div class="chat-row">
+          <textarea class="chat-input" id="chat-input"
+                    placeholder="Ask a follow-up, paste an answer for feedback…"
+                    rows="1"
+                    onkeydown="chatKey(event)"
+                    oninput="grow(this)"></textarea>
+          <button class="chat-send" id="chat-send" onclick="sendChat()">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M1.5 7.5L13.5 1.5L8.5 7.5L13.5 13.5L1.5 7.5Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chat-hints">
+          <button class="pill" onclick="setInput('What are the biggest risks in this role?')">Biggest risks?</button>
+          <button class="pill" onclick="setInput('What questions should I ask the interviewer?')">Questions to ask</button>
+          <button class="pill" onclick="setInput('What salary range should I target for this role?')">Salary intel</button>
+          <button class="pill" onclick="setInput('What are common red flags in this type of interview?')">Red flags</button>
+          <button class="pill" onclick="setInput('Give me a 60-second elevator pitch for this role.')">Elevator pitch</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* placeholder — JS added in subsequent stages */
+function toggleSettings() { document.getElementById('settings-panel').classList.toggle('on'); }
+function grow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
+function saveKey() {}
+function openHistory() {}
+function closeHistory() {}
+function generateGuide() {}
+function expandAll() {}
+function collapseAll() {}
+function resetSession() {}
+function sendChat() {}
+function chatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
+function setInput(t) { document.getElementById('chat-input').value = t; }
+function mockInterview() {}
+function pressureTest() {}
+</script>
+</body>
 </html>
