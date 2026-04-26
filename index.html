@@ -958,6 +958,87 @@ function loadSavedKey() {
   if (saved) $('api-key').value = saved;
 }
 
+/* ── MARKDOWN RENDERER ───────────────────────────────────────── */
+function md(raw) {
+  const lines = raw.split('\n');
+  const out = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const tr   = line.trim();
+
+    if (!tr) { out.push(''); i++; continue; }
+
+    // Fenced code block
+    if (line.startsWith('```')) {
+      let code = '';
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        code += esc(lines[i]) + '\n';
+        i++;
+      }
+      i++;
+      out.push(`<pre><code>${code.trimEnd()}</code></pre>`);
+      continue;
+    }
+
+    if (tr.startsWith('### ')) { out.push(`<h3>${inline(tr.slice(4))}</h3>`); i++; continue; }
+    if (tr.startsWith('## '))  { out.push(`<h2>${inline(tr.slice(3))}</h2>`); i++; continue; }
+    if (tr.startsWith('# '))   { out.push(`<h1>${inline(tr.slice(2))}</h1>`); i++; continue; }
+    if (tr.startsWith('> '))   { out.push(`<blockquote>${inline(tr.slice(2))}</blockquote>`); i++; continue; }
+    if (/^-{3,}$/.test(tr))    { out.push('<hr>'); i++; continue; }
+
+    if (/^[-*+] /.test(tr)) {
+      const items = [];
+      while (i < lines.length && /^[-*+] /.test(lines[i].trim())) {
+        items.push(`<li>${inline(lines[i].trim().replace(/^[-*+] /, ''))}</li>`);
+        i++;
+      }
+      out.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+
+    if (/^\d+\. /.test(tr)) {
+      const items = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i].trim())) {
+        items.push(`<li>${inline(lines[i].trim().replace(/^\d+\. /, ''))}</li>`);
+        i++;
+      }
+      out.push(`<ol>${items.join('')}</ol>`);
+      continue;
+    }
+
+    // Paragraph — collect continuation lines
+    let para = inline(line);
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !/^(#{1,3} |[-*+] |\d+\. |```|> |-{3,})/.test(lines[i].trim())
+    ) {
+      para += ' ' + inline(lines[i]);
+      i++;
+    }
+    out.push(`<p>${para}</p>`);
+  }
+
+  return out.join('\n');
+}
+
+function inline(t) {
+  // Links before bold/italic to avoid conflicts
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
+    const safe = /^javascript:/i.test(url.trim()) ? '#' : url;
+    return `<a href="${safe}" target="_blank" rel="noopener">${label}</a>`;
+  });
+  t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  t = t.replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>');
+  t = t.replace(/\*(.+?)\*/g,         '<em>$1</em>');
+  t = t.replace(/`([^`]+)`/g,         '<code>$1</code>');
+  return t;
+}
+
 /* placeholder stubs — replaced in later stages */
 function openHistory() {}
 function closeHistory() {}
