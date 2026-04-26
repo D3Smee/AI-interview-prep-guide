@@ -3,1279 +3,742 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PREP// — AI Interview Intelligence</title>
+<title>Prep — Interview Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-/* ── RESET ──────────────────────────────────────────────────────── */
+
+/* ── RESET ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── TOKENS ─────────────────────────────────────────────────────── */
+/* ── TOKENS ──────────────────────────────────────────────────── */
 :root {
-  --bg-0:        #07090f;
-  --bg-1:        #0d1018;
-  --bg-card:     #111520;
-  --bg-input:    #0a0d16;
-  --border:      #1e2435;
-  --border-hi:   #2a3550;
-  --accent:      #f0a030;
-  --accent-dim:  #7a5218;
-  --accent-glow: rgba(240,160,48,.12);
-  --txt-1:       #e8ecf0;
-  --txt-2:       #6b7a94;
-  --txt-3:       #3d4a60;
-  --green:       #00c47a;
-  --red:         #ff4d6d;
-  --blue:        #3d8fff;
-  --mono:        'JetBrains Mono', 'Fira Code', Consolas, monospace;
-  --sans:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --r:           4px;
-  --r-lg:        8px;
+  --bg:         #0d0b09;
+  --bg-1:       #141210;
+  --bg-2:       #1c1916;
+  --bg-input:   #100e0c;
+  --bg-card:    #131110;
+
+  --line:       #272320;
+  --line-hi:    #3a3530;
+
+  --gold:       #c4882a;
+  --gold-dim:   #5c3e12;
+  --gold-glow:  rgba(196,136,42,.1);
+  --crimson:    #9b2335;
+
+  --t1:         #ede8de;
+  --t2:         #7a7060;
+  --t3:         #3d3830;
+
+  --green:      #2a8c5e;
+  --red:        #b83030;
+  --blue:       #2d6ab0;
+
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --mono:  'DM Mono', 'Fira Code', Consolas, monospace;
+  --sans:  'DM Sans', -apple-system, sans-serif;
+
+  --r:  3px;
+  --r2: 6px;
 }
 
-/* ── BASE ────────────────────────────────────────────────────────── */
+/* ── BASE ────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
 body {
-  background: var(--bg-0);
-  color: var(--txt-1);
+  background: var(--bg);
+  color: var(--t1);
   font-family: var(--sans);
   font-size: 14px;
   line-height: 1.6;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-0); }
-::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+/* Ambient warm glow */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 65%, rgba(196,136,42,.04) 0%, transparent 100%),
+    radial-gradient(ellipse 40% 55% at 85% 20%, rgba(155,35,53,.03) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
 
-/* ── LAYOUT ──────────────────────────────────────────────────────── */
 .app {
-  max-width: 1100px;
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 28px 100px;
 }
 
-/* ── HEADER ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-hi); border-radius: 2px; }
+
+/* ── HISTORY PANEL ───────────────────────────────────────────── */
+.h-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+  z-index: 100;
+}
+.h-overlay.on { opacity: 1; pointer-events: all; }
+
+.h-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 360px;
+  background: var(--bg-1);
+  border-left: 1px solid var(--line);
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.16,1,.3,1);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.h-panel.on { transform: translateX(0); }
+
+.h-panel-top {
+  padding: 24px 22px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.h-panel-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--t1);
+  letter-spacing: -.2px;
+}
+
+.h-close {
+  background: none;
+  border: none;
+  color: var(--t2);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  transition: color .15s;
+}
+.h-close:hover { color: var(--t1); }
+
+.h-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.h-empty {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  text-align: center;
+  padding: 48px 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.h-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  padding: 15px 16px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.h-card:hover { border-color: var(--line-hi); background: var(--bg-card); }
+
+.h-card-company {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--t1);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.h-card-role {
+  font-size: 12px;
+  color: var(--t2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 12px;
+}
+
+.h-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.h-card-date {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+
+.h-card-del {
+  background: none;
+  border: none;
+  color: var(--t3);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+  line-height: 1;
+}
+.h-card-del:hover { color: var(--red); background: rgba(184,48,48,.1); }
+
+/* ── HEADER ──────────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 0 18px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 40px;
+  padding: 28px 0 22px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 44px;
 }
 
-.logo { display: flex; align-items: baseline; gap: 12px; }
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
 
 .logo-mark {
-  font-family: var(--mono);
-  font-size: 20px;
+  font-family: var(--serif);
+  font-size: 26px;
   font-weight: 500;
-  color: var(--accent);
-  letter-spacing: -0.5px;
+  font-style: italic;
+  color: var(--gold);
+  letter-spacing: -.3px;
+}
+
+.logo-rule {
+  width: 1px;
+  height: 14px;
+  background: var(--line-hi);
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .logo-sub {
-  font-size: 11px;
-  color: var(--txt-2);
-  letter-spacing: 2px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
+  color: var(--t3);
 }
 
-/* ── SETTINGS ────────────────────────────────────────────────────── */
-.settings-toggle {
+.header-nav { display: flex; gap: 6px; align-items: center; }
+
+.nav-btn {
   background: none;
-  border: 1px solid var(--border);
-  color: var(--txt-2);
+  border: 1px solid var(--line);
+  color: var(--t2);
   font-family: var(--mono);
-  font-size: 11px;
-  padding: 6px 14px;
+  font-size: 10px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  padding: 7px 14px;
   border-radius: var(--r);
   cursor: pointer;
   transition: border-color .2s, color .2s;
-  letter-spacing: .5px;
-}
-.settings-toggle:hover { border-color: var(--accent-dim); color: var(--accent); }
-
-.settings-panel {
-  display: none;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 20px;
-  margin-bottom: 28px;
-}
-.settings-panel.open { display: block; }
-
-.settings-note {
-  color: var(--txt-2);
-  font-size: 12px;
-  margin-top: 8px;
-}
-
-/* ── SECTION LABEL ───────────────────────────────────────────────── */
-.section-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--txt-2);
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
-.section-label::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 1px;
-  background: var(--accent);
+.nav-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+.hist-badge {
+  background: var(--gold);
+  color: #000;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 1px 6px;
+  display: none;
 }
+.hist-badge.on { display: inline; }
 
-/* ── FORMS ───────────────────────────────────────────────────────── */
-.form-section { margin-bottom: 48px; }
+/* ── SETTINGS ────────────────────────────────────────────────── */
+.settings-panel {
+  display: none;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  padding: 22px;
+  margin-bottom: 32px;
+}
+.settings-panel.on { display: block; }
 
-.form-grid { display: grid; gap: 16px; }
-
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-
-.form-label {
-  font-family: var(--mono);
+.settings-note {
   font-size: 11px;
-  color: var(--txt-2);
-  letter-spacing: .5px;
+  color: var(--t2);
+  margin-top: 8px;
+  line-height: 1.5;
 }
-.form-label .opt { color: var(--txt-3); }
 
-.form-control {
+/* ── EYEBROW ─────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--gold);
+}
+
+/* ── FORMS ───────────────────────────────────────────────────── */
+.form-section { margin-bottom: 52px; }
+.form-grid { display: grid; gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 7px; }
+
+.field-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+.field-label .opt { color: var(--t3); }
+
+.field {
   background: var(--bg-input);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: var(--r);
-  color: var(--txt-1);
+  color: var(--t1);
   font-family: var(--sans);
   font-size: 14px;
-  padding: 10px 12px;
-  transition: border-color .2s, box-shadow .2s;
-  outline: none;
+  padding: 11px 13px;
   width: 100%;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
 }
-.form-control:focus {
-  border-color: var(--accent-dim);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+.field:focus {
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px var(--gold-glow);
 }
-.form-control::placeholder { color: var(--txt-3); }
-textarea.form-control { resize: vertical; min-height: 100px; }
+.field::placeholder { color: var(--t3); }
+textarea.field { resize: vertical; min-height: 110px; line-height: 1.65; }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 
-/* ── BUTTONS ─────────────────────────────────────────────────────── */
+/* ── BUTTONS ─────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 11px 22px;
+  gap: 9px;
+  padding: 11px 24px;
   border-radius: var(--r);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
   font-weight: 500;
-  letter-spacing: .5px;
   cursor: pointer;
-  transition: background .2s, border-color .2s, color .2s;
+  transition: all .2s;
   border: none;
 }
-.btn-primary { background: var(--accent); color: #000; }
-.btn-primary:hover:not(:disabled) { background: #ffb840; }
-.btn-primary:disabled { background: var(--accent-dim); color: #444; cursor: not-allowed; }
+.btn-primary { background: var(--gold); color: #000; }
+.btn-primary:hover:not(:disabled) { background: #d4982e; }
+.btn-primary:disabled { background: var(--gold-dim); color: #4a4030; cursor: not-allowed; }
 
 .btn-ghost {
   background: none;
-  border: 1px solid var(--border);
-  color: var(--txt-2);
+  border: 1px solid var(--line);
+  color: var(--t2);
 }
-.btn-ghost:hover { border-color: var(--accent-dim); color: var(--accent); }
+.btn-ghost:hover { border-color: var(--line-hi); color: var(--t1); }
+.btn-sm { padding: 6px 12px; font-size: 9px; }
 
-.btn-sm { padding: 6px 12px; font-size: 11px; }
-
-/* ── LOADING ─────────────────────────────────────────────────────── */
-.loading-bar {
+/* ── LOADER ──────────────────────────────────────────────────── */
+.loader {
   display: none;
   align-items: center;
   gap: 12px;
-  color: var(--txt-2);
+  color: var(--t2);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
 }
-.loading-bar.on { display: flex; }
+.loader.on { display: flex; }
 
-.spinner {
-  width: 14px; height: 14px;
-  border: 1px solid var(--border);
-  border-top-color: var(--accent);
+.spin {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--line-hi);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: spin .7s linear infinite;
   flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── GUIDE SECTION ───────────────────────────────────────────────── */
+/* ── GUIDE ───────────────────────────────────────────────────── */
 #guide-section { display: none; }
 #guide-section.on { display: block; }
 
-.guide-header {
+.guide-hd {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-hd-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-  gap: 16px;
+  gap: 20px;
 }
 
-.guide-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--txt-1);
+.guide-company {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--t1);
+  letter-spacing: -.5px;
+  line-height: 1.1;
 }
 
 .guide-meta {
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--txt-2);
-  margin-top: 4px;
+  font-size: 9px;
+  color: var(--t3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 7px;
 }
 
-.guide-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.guide-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-top: 6px;
+}
 
-/* ── COLLAPSIBLE CARDS ───────────────────────────────────────────── */
-.cards { display: flex; flex-direction: column; gap: 8px; }
+/* ── CARDS ───────────────────────────────────────────────────── */
+.cards { display: flex; flex-direction: column; gap: 6px; }
 
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
   overflow: hidden;
   transition: border-color .2s;
 }
-.card:hover { border-color: var(--border-hi); }
+.card:hover { border-color: var(--line-hi); }
 
-.card-header {
+.card-hd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 15px 20px;
   cursor: pointer;
   user-select: none;
   transition: background .15s;
+  gap: 16px;
 }
-.card-header:hover { background: rgba(255,255,255,.02); }
+.card-hd:hover { background: rgba(255,255,255,.015); }
 
-.card-header-left { display: flex; align-items: center; gap: 10px; }
+.card-hd-left {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
 
-.card-num {
+.card-n {
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--accent);
-  width: 18px;
+  font-size: 9px;
+  color: var(--gold);
+  opacity: .6;
   flex-shrink: 0;
+  letter-spacing: .5px;
 }
 
 .card-title {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--serif);
+  font-size: 17px;
   font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--txt-1);
+  color: var(--t1);
 }
 
-.card-chevron {
-  color: var(--txt-3);
-  font-size: 11px;
+.card-chev {
+  color: var(--t3);
+  font-size: 10px;
   transition: transform .2s;
+  flex-shrink: 0;
 }
-.card.open .card-chevron { transform: rotate(180deg); }
+.card.open .card-chev { transform: rotate(180deg); }
 
 .card-body {
   display: none;
-  padding: 16px 18px 20px;
-  border-top: 1px solid var(--border);
+  padding: 18px 20px 22px;
+  border-top: 1px solid var(--line);
 }
 .card.open .card-body { display: block; }
 
-/* ── MARKDOWN ────────────────────────────────────────────────────── */
-.md h1 { font-size: 17px; font-weight: 600; margin: 18px 0 8px; color: var(--txt-1); }
-.md h2 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; color: var(--txt-1); }
+/* ── MARKDOWN ────────────────────────────────────────────────── */
+.md h1 {
+  font-family: var(--serif);
+  font-size: 22px; font-weight: 500;
+  color: var(--t1); margin: 20px 0 10px;
+}
+.md h2 {
+  font-family: var(--serif);
+  font-size: 17px; font-weight: 500;
+  color: var(--t1); margin: 18px 0 8px;
+}
 .md h3 {
   font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .5px;
-  color: var(--accent);
-  margin: 16px 0 6px;
-  text-transform: uppercase;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--gold); margin: 18px 0 8px;
 }
-.md p { margin: 8px 0; color: var(--txt-1); line-height: 1.75; }
+.md p { margin: 8px 0; color: var(--t1); line-height: 1.8; }
 .md ul, .md ol { padding-left: 22px; margin: 8px 0; }
-.md li { margin: 5px 0; line-height: 1.7; }
+.md li { margin: 5px 0; line-height: 1.75; }
 .md strong { color: #fff; font-weight: 600; }
-.md em { color: var(--txt-2); font-style: italic; }
+.md em { color: var(--t2); font-style: italic; }
 .md a {
-  color: var(--accent);
+  color: var(--gold);
   text-decoration: none;
-  border-bottom: 1px solid var(--accent-dim);
+  border-bottom: 1px solid var(--gold-dim);
   transition: border-color .15s;
 }
-.md a:hover { border-color: var(--accent); }
+.md a:hover { border-color: var(--gold); }
 .md code {
-  font-family: var(--mono);
-  font-size: 12px;
-  background: var(--bg-1);
-  padding: 1px 6px;
-  border-radius: 3px;
-  color: var(--green);
+  font-family: var(--mono); font-size: 12px;
+  background: var(--bg-2); padding: 1px 6px;
+  border-radius: 3px; color: var(--green);
 }
 .md pre {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 14px 16px;
-  overflow-x: auto;
-  margin: 12px 0;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 14px 16px;
+  overflow-x: auto; margin: 12px 0;
 }
 .md pre code { background: none; padding: 0; }
 .md blockquote {
-  border-left: 2px solid var(--accent);
-  padding-left: 14px;
-  color: var(--txt-2);
-  margin: 10px 0;
+  border-left: 2px solid var(--gold-dim);
+  padding-left: 16px; color: var(--t2); margin: 12px 0;
+  font-family: var(--serif); font-size: 15px; font-style: italic;
 }
-.md hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.md hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 
-/* ── STREAM CURSOR ───────────────────────────────────────────────── */
+/* ── STREAM CURSOR ───────────────────────────────────────────── */
 .streaming::after {
   content: '▋';
-  color: var(--accent);
+  color: var(--gold);
   animation: blink .8s step-end infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ── CHAT SECTION ────────────────────────────────────────────────── */
-#chat-section { display: none; margin-top: 48px; }
+/* ── CHAT ────────────────────────────────────────────────────── */
+#chat-section { display: none; margin-top: 52px; }
 #chat-section.on { display: block; }
 
 .chat-wrap {
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
   overflow: hidden;
   background: var(--bg-card);
 }
 
 .chat-top {
-  padding: 13px 18px;
-  border-bottom: 1px solid var(--border);
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .chat-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--txt-2);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--t2);
 }
 
 .live-dot {
   width: 6px; height: 6px;
   background: var(--green);
   border-radius: 50%;
-  animation: pulse 2.2s ease-in-out infinite;
+  animation: pulse 2.5s ease-in-out infinite;
 }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
 
 .chat-btns { display: flex; gap: 8px; }
 
 .chat-msgs {
   height: 420px;
   overflow-y: auto;
-  padding: 20px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
-/* ── MESSAGES ────────────────────────────────────────────────────── */
-.msg { display: flex; gap: 12px; }
+.msg { display: flex; gap: 14px; }
 
 .msg-av {
   width: 28px; height: 28px;
   border-radius: var(--r);
   font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-size: 8px; font-weight: 500;
   letter-spacing: .5px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; text-transform: uppercase;
 }
-.msg.user .msg-av  { background: rgba(240,160,48,.15); color: var(--accent); }
-.msg.ai   .msg-av  { background: rgba(61,143,255,.15); color: var(--blue); }
+.msg.user .msg-av { background: rgba(196,136,42,.12); color: var(--gold); }
+.msg.ai   .msg-av { background: rgba(45,106,176,.12); color: var(--blue); }
 
 .msg-body { flex: 1; min-width: 0; }
 
 .msg-role {
   font-family: var(--mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--txt-3);
-  margin-bottom: 5px;
+  font-size: 8px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--t3); margin-bottom: 5px;
 }
 
-.msg-text {
-  color: var(--txt-1);
-  line-height: 1.75;
-  word-break: break-word;
-}
-/* re-use .md styles inside messages */
+.msg-text { color: var(--t1); line-height: 1.8; word-break: break-word; }
 .msg-text strong { color: #fff; font-weight: 600; }
-.msg-text em { color: var(--txt-2); }
-.msg-text a { color: var(--accent); }
+.msg-text em { color: var(--t2); }
+.msg-text a { color: var(--gold); }
 .msg-text code {
   font-family: var(--mono); font-size: 12px;
-  background: var(--bg-1); padding: 1px 6px;
+  background: var(--bg-2); padding: 1px 6px;
   border-radius: 3px; color: var(--green);
 }
 .msg-text ul, .msg-text ol { padding-left: 20px; margin: 6px 0; }
 .msg-text li { margin: 4px 0; }
-.msg-text p { margin: 6px 0; }
+.msg-text p { margin: 5px 0; }
 .msg-text blockquote {
-  border-left: 2px solid var(--accent);
-  padding-left: 12px; color: var(--txt-2); margin: 8px 0;
+  border-left: 2px solid var(--gold-dim);
+  padding-left: 12px; color: var(--t2); margin: 8px 0;
 }
 
-/* ── CHAT INPUT ──────────────────────────────────────────────────── */
-.chat-foot { border-top: 1px solid var(--border); padding: 14px 16px; }
-
+.chat-foot { border-top: 1px solid var(--line); padding: 16px; }
 .chat-row { display: flex; gap: 10px; align-items: flex-end; }
 
 .chat-input {
   flex: 1;
   background: var(--bg-input);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: var(--r);
-  color: var(--txt-1);
-  font-family: var(--sans);
-  font-size: 14px;
-  padding: 10px 12px;
-  resize: none;
-  outline: none;
-  min-height: 42px;
-  max-height: 160px;
-  line-height: 1.5;
-  transition: border-color .2s;
+  color: var(--t1);
+  font-family: var(--sans); font-size: 14px;
+  padding: 11px 13px; resize: none; outline: none;
+  min-height: 44px; max-height: 160px;
+  line-height: 1.55; transition: border-color .2s;
 }
-.chat-input:focus { border-color: var(--accent-dim); }
-.chat-input::placeholder { color: var(--txt-3); }
+.chat-input:focus { border-color: var(--gold-dim); }
+.chat-input::placeholder { color: var(--t3); }
 
 .chat-send {
-  width: 42px; height: 42px;
-  background: var(--accent);
-  border: none;
-  border-radius: var(--r);
-  color: #000;
+  width: 44px; height: 44px;
+  background: var(--gold); border: none;
+  border-radius: var(--r); color: #000;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .2s;
-  flex-shrink: 0;
+  transition: background .2s; flex-shrink: 0;
 }
-.chat-send:hover:not(:disabled) { background: #ffb840; }
-.chat-send:disabled { background: var(--accent-dim); cursor: not-allowed; }
+.chat-send:hover:not(:disabled) { background: #d4982e; }
+.chat-send:disabled { background: var(--gold-dim); cursor: not-allowed; }
 
 .chat-hints { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
 
 .pill {
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: 20px;
-  color: var(--txt-2);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 4px 12px;
-  cursor: pointer;
+  color: var(--t2);
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 12px; cursor: pointer;
   transition: border-color .2s, color .2s;
   white-space: nowrap;
 }
-.pill:hover { border-color: var(--accent-dim); color: var(--accent); }
+.pill:hover { border-color: var(--gold-dim); color: var(--gold); }
 
-/* ── DIVIDER ─────────────────────────────────────────────────────── */
-.divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; display: none; }
+/* ── MISC ────────────────────────────────────────────────────── */
+.divider { border: none; border-top: 1px solid var(--line); margin: 40px 0; display: none; }
 .divider.on { display: block; }
 
-/* ── TOAST ───────────────────────────────────────────────────────── */
 .toast {
-  position: fixed; bottom: 24px; right: 24px;
-  background: #160810;
-  border: 1px solid rgba(255,77,109,.3);
+  position: fixed; bottom: 28px; right: 28px;
+  background: #140a0a;
+  border: 1px solid rgba(184,48,48,.25);
   border-left: 3px solid var(--red);
   border-radius: var(--r);
-  padding: 12px 16px;
-  font-size: 13px;
-  color: #ff9aaa;
-  max-width: 380px;
-  z-index: 999;
-  display: none;
-  line-height: 1.5;
+  padding: 13px 18px;
+  font-size: 13px; color: #e89090;
+  max-width: 380px; z-index: 999;
+  display: none; line-height: 1.55;
 }
-.toast.on { display: block; animation: slideUp .2s ease; }
-@keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.toast.on { display: block; animation: toastIn .2s ease; }
+@keyframes toastIn { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* ── RETRY BUTTON (inline) ───────────────────────────────────────── */
 .retry-btn {
-  display: inline-block;
-  margin-top: 10px;
+  display: inline-block; margin-top: 10px;
   background: none;
-  border: 1px solid var(--border-hi);
-  border-radius: var(--r);
-  color: var(--accent);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 5px 12px;
-  cursor: pointer;
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r); color: var(--gold);
+  font-family: var(--mono); font-size: 10px;
+  padding: 5px 12px; cursor: pointer;
   transition: border-color .2s;
 }
-.retry-btn:hover { border-color: var(--accent); }
+.retry-btn:hover { border-color: var(--gold); }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 640px) {
+  .app { padding: 0 16px 80px; }
   .form-row { grid-template-columns: 1fr; }
   .chat-msgs { height: 300px; }
-  .guide-header { flex-direction: column; }
+  .h-panel { width: 100%; }
+  .guide-company { font-size: 26px; }
+  .guide-hd-top { flex-direction: column; }
   .logo-sub { display: none; }
 }
+
 </style>
 </head>
-<body>
-<div class="app">
-
-  <!-- ── HEADER ── -->
-  <header class="header">
-    <div class="logo">
-      <span class="logo-mark">PREP//</span>
-      <span class="logo-sub">AI Interview Intelligence</span>
-    </div>
-    <button class="settings-toggle" onclick="toggleSettings()">⚙&nbsp; API Key</button>
-  </header>
-
-  <!-- ── SETTINGS ── -->
-  <div class="settings-panel" id="settings-panel">
-    <div class="form-group">
-      <label class="form-label">ANTHROPIC API KEY</label>
-      <input type="password" class="form-control" id="api-key"
-             placeholder="sk-ant-api03-…"
-             style="font-family:var(--mono);letter-spacing:.5px;">
-    </div>
-    <p class="settings-note">Held in memory only — never stored or logged.</p>
-  </div>
-
-  <!-- ── INPUT ── -->
-  <section class="form-section" id="input-section">
-    <div class="section-label">Define Your Target</div>
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label class="form-label">JOB DESCRIPTION</label>
-        <textarea class="form-control" id="jd"
-                  placeholder="Paste the full job description or a URL to the posting…"
-                  style="min-height:140px;"></textarea>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">COMPANY NAME</label>
-          <input type="text" class="form-control" id="company-name"
-                 placeholder="Acme Corp">
-        </div>
-        <div class="form-group">
-          <label class="form-label">INTERVIEWER NAME <span class="opt">(optional)</span></label>
-          <input type="text" class="form-control" id="iname"
-                 placeholder="Jane Smith">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">COMPANY CONTEXT <span class="opt">(optional)</span></label>
-          <textarea class="form-control" id="company-ctx"
-                    placeholder="LinkedIn URL, recent news, funding round, product info…"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">INTERVIEWER CONTEXT <span class="opt">(optional)</span></label>
-          <textarea class="form-control" id="iname-ctx"
-                    placeholder="LinkedIn URL, title, role, background…"></textarea>
-        </div>
-      </div>
-
-    </div><!-- /form-grid -->
-
-    <div style="margin-top:24px;display:flex;align-items:center;gap:18px;">
-      <button class="btn btn-primary" id="gen-btn" onclick="generateGuide()">
-        Generate Prep Guide &nbsp;→
-      </button>
-      <div class="loading-bar" id="gen-loading">
-        <div class="spinner"></div>
-        <span id="gen-status">Analyzing role…</span>
-      </div>
-    </div>
-  </section>
-
-  <hr class="divider" id="divider">
-
-  <!-- ── GUIDE ── -->
-  <section id="guide-section">
-    <div class="guide-header">
-      <div>
-        <div class="guide-title" id="guide-title">Interview Prep Guide</div>
-        <div class="guide-meta" id="guide-meta"></div>
-      </div>
-      <div class="guide-actions">
-        <button class="btn btn-ghost btn-sm" onclick="expandAll()">Expand All</button>
-        <button class="btn btn-ghost btn-sm" onclick="collapseAll()">Collapse</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetSession()">↺ Reset</button>
-      </div>
-    </div>
-    <div class="cards" id="cards"></div>
-  </section>
-
-  <!-- ── CHAT ── -->
-  <section id="chat-section">
-    <div class="section-label" style="margin-bottom:16px;">AI Coaching Session</div>
-    <div class="chat-wrap">
-
-      <div class="chat-top">
-        <div class="chat-label">
-          <div class="live-dot"></div>
-          Live Session
-        </div>
-        <div class="chat-btns">
-          <button class="btn btn-ghost btn-sm" onclick="mockInterview()">Mock Interview</button>
-          <button class="btn btn-ghost btn-sm" onclick="pressureTest()">Pressure Test</button>
-        </div>
-      </div>
-
-      <div class="chat-msgs" id="chat-msgs">
-        <div class="msg ai">
-          <div class="msg-av">AI</div>
-          <div class="msg-body">
-            <div class="msg-role">Coach</div>
-            <div class="msg-text">Your prep guide is ready. Ask me anything about this role, company, or interviewer — or start a mock interview.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="chat-foot">
-        <div class="chat-row">
-          <textarea class="chat-input" id="chat-input"
-                    placeholder="Ask a follow-up, paste an answer for feedback…"
-                    rows="1"
-                    onkeydown="chatKey(event)"
-                    oninput="grow(this)"></textarea>
-          <button class="chat-send" id="chat-send" onclick="sendChat()">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M1.5 7.5L13.5 1.5L8.5 7.5L13.5 13.5L1.5 7.5Z" fill="currentColor"/>
-            </svg>
-          </button>
-        </div>
-        <div class="chat-hints">
-          <button class="pill" onclick="setInput('What are the biggest risks in this role?')">Biggest risks?</button>
-          <button class="pill" onclick="setInput('What questions should I ask the interviewer?')">Questions to ask</button>
-          <button class="pill" onclick="setInput('What salary range should I target for this role?')">Salary intel</button>
-          <button class="pill" onclick="setInput('What are common red flags in this type of interview?')">Red flags</button>
-          <button class="pill" onclick="setInput('Give me a 60-second elevator pitch for this role.')">Elevator pitch</button>
-        </div>
-      </div>
-    </div><!-- /chat-wrap -->
-  </section>
-
-</div><!-- /app -->
-
-<!-- ── TOAST ── -->
-<div class="toast" id="toast"></div>
-
-<script>
-/* ================================================================
-   STATE
-================================================================ */
-let guideText   = '';           // full streamed guide (for chat context)
-let chatHistory = [];           // [{role, content}, …]
-let generating  = false;
-let chatting    = false;
-
-/* ================================================================
-   UTILS
-================================================================ */
-const $  = id => document.getElementById(id);
-const apiKey = () => $('api-key').value.trim();
-
-function toggleSettings() {
-  $('settings-panel').classList.toggle('open');
-}
-
-function grow(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-}
-
-let toastTimer;
-function toast(msg, ms = 5000) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.classList.add('on');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('on'), ms);
-}
-
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/* ================================================================
-   MARKDOWN RENDERER
-================================================================ */
-function md(raw) {
-  const lines = raw.split('\n');
-  const out   = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    if (!trimmed) { out.push(''); i++; continue; }
-
-    // Fenced code block
-    if (line.startsWith('```')) {
-      let code = '';
-      i++;
-      while (i < lines.length && !lines[i].startsWith('```')) {
-        code += esc(lines[i]) + '\n';
-        i++;
-      }
-      i++;
-      out.push(`<pre><code>${code.trimEnd()}</code></pre>`);
-      continue;
-    }
-
-    // Headings
-    if (trimmed.startsWith('### ')) { out.push(`<h3>${inline(trimmed.slice(4))}</h3>`); i++; continue; }
-    if (trimmed.startsWith('## '))  { out.push(`<h2>${inline(trimmed.slice(3))}</h2>`); i++; continue; }
-    if (trimmed.startsWith('# '))   { out.push(`<h1>${inline(trimmed.slice(2))}</h1>`); i++; continue; }
-
-    // Blockquote
-    if (trimmed.startsWith('> ')) { out.push(`<blockquote>${inline(trimmed.slice(2))}</blockquote>`); i++; continue; }
-
-    // HR
-    if (/^-{3,}$/.test(trimmed)) { out.push('<hr>'); i++; continue; }
-
-    // Unordered list
-    if (/^[-*+] /.test(trimmed)) {
-      const items = [];
-      while (i < lines.length && /^[-*+] /.test(lines[i].trim())) {
-        items.push(`<li>${inline(lines[i].trim().replace(/^[-*+] /, ''))}</li>`);
-        i++;
-      }
-      out.push(`<ul>${items.join('')}</ul>`);
-      continue;
-    }
-
-    // Ordered list
-    if (/^\d+\. /.test(trimmed)) {
-      const items = [];
-      while (i < lines.length && /^\d+\. /.test(lines[i].trim())) {
-        items.push(`<li>${inline(lines[i].trim().replace(/^\d+\. /, ''))}</li>`);
-        i++;
-      }
-      out.push(`<ol>${items.join('')}</ol>`);
-      continue;
-    }
-
-    // Paragraph (collect continuation lines)
-    let para = inline(line);
-    i++;
-    while (
-      i < lines.length &&
-      lines[i].trim() &&
-      !/^(#{1,3} |[-*+] |\d+\. |```|> |-{3,})/.test(lines[i].trim())
-    ) {
-      para += ' ' + inline(lines[i]);
-      i++;
-    }
-    out.push(`<p>${para}</p>`);
-  }
-
-  return out.join('\n');
-}
-
-function inline(t) {
-  // Links first (before bold/italic to avoid conflicts)
-  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
-    const safe = /^javascript:/i.test(url.trim()) ? '#' : url;
-    return `<a href="${safe}" target="_blank" rel="noopener">${label}</a>`;
-  });
-  t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  t = t.replace(/\*(.+?)\*/g,     '<em>$1</em>');
-  t = t.replace(/`([^`]+)`/g,     '<code>$1</code>');
-  return t;
-}
-
-/* ================================================================
-   GUIDE GENERATION
-================================================================ */
-const SECTIONS = [
-  { key: 'COMPANY SNAPSHOT',           num: '01', title: 'Company Snapshot' },
-  { key: 'ROLE BREAKDOWN',             num: '02', title: 'Role Breakdown' },
-  { key: 'INTERVIEWER INTEL',          num: '03', title: 'Interviewer Intel' },
-  { key: 'LIKELY INTERVIEW QUESTIONS', num: '04', title: 'Likely Interview Questions' },
-  { key: 'YOUR TALKING POINTS',        num: '05', title: 'Your Talking Points' },
-  { key: 'RECOMMENDED READING',        num: '06', title: 'Recommended Reading' },
-];
-
-function guidePrompt(jd, company, companyCtx, iname, ictx) {
-  return `You are an elite executive career coach and corporate intelligence analyst helping someone prepare for a job interview.
-
-INPUT:
-- Job Description: ${jd}
-- Company: ${company}
-- Company Context: ${companyCtx || 'Not provided'}
-- Interviewer Name: ${iname || 'Not provided'}
-- Interviewer Context: ${ictx || 'Not provided'}
-
-Write a comprehensive, specific interview prep guide using EXACTLY these six section headers (used for parsing):
-
-## COMPANY SNAPSHOT
-What the company does, business model, stage (startup/growth/public/PE-backed), key products, culture signals, recent news. Include 2–3 markdown links to sources or useful searches.
-
-## ROLE BREAKDOWN
-What this role truly requires beyond the JD text, the skills that will determine success, realistic day-to-day, the candidate archetype they want, any unspoken requirements or red flags in the JD.
-
-## INTERVIEWER INTEL
-${iname
-  ? `Based on "${iname}"${ictx ? ` and context: "${ictx}"` : ''}: infer their likely background and trajectory, what they care about, how to build rapport, what impresses vs. annoys this type.`
-  : 'No interviewer named. Provide general guidance: what types of interviewers appear at this kind of company/role, how to read them, universal rapport tactics.'}
-
-## LIKELY INTERVIEW QUESTIONS
-8–10 highly specific questions for THIS role and company. Format each as:
-**[BEHAVIORAL]** Question text — *what they're really testing*
-**[TECHNICAL]** Question text — *what they're really testing*
-**[SITUATIONAL]** Question text — *what they're really testing*
-
-## YOUR TALKING POINTS
-4–5 specific narrative themes to weave into answers. For each: what to emphasize, why it matters here, and a one-line natural intro.
-
-## RECOMMENDED READING
-5–7 specific resources as a numbered markdown list with links. Include company blog, industry frameworks, relevant news sources, and one "search for X" suggestion.
-
-Tone: direct, intelligence-briefing style. No filler. No generic advice. Every line earns its place.`;
-}
-
-function buildCards(company) {
-  $('cards').innerHTML = SECTIONS.map((s, idx) =>
-    `<div class="card ${idx === 0 ? 'open' : ''}" id="card-${idx}">
-       <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
-         <div class="card-header-left">
-           <span class="card-num">${s.num}</span>
-           <span class="card-title">${s.title}</span>
-         </div>
-         <span class="card-chevron">▾</span>
-       </div>
-       <div class="card-body">
-         <div class="md streaming" id="sec-${idx}">
-           <p style="color:var(--txt-3)">Generating…</p>
-         </div>
-       </div>
-     </div>`
-  ).join('');
-  $('guide-title').textContent = `${company} — Interview Prep Guide`;
-  $('guide-meta').textContent  = `Generated ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`;
-}
-
-function parseSections(text) {
-  const pattern = /## (COMPANY SNAPSHOT|ROLE BREAKDOWN|INTERVIEWER INTEL|LIKELY INTERVIEW QUESTIONS|YOUR TALKING POINTS|RECOMMENDED READING)/g;
-  const matches = [...text.matchAll(pattern)];
-  const result  = {};
-  matches.forEach((m, idx) => {
-    const start = m.index + m[0].length;
-    const end   = idx + 1 < matches.length ? matches[idx + 1].index : text.length;
-    result[m[1]] = text.slice(start, end).trim();
-  });
-  return result;
-}
-
-function renderSections(sections, streaming) {
-  SECTIONS.forEach((s, idx) => {
-    const el = $(`sec-${idx}`);
-    if (!el) return;
-    const content = sections[s.key];
-    if (content !== undefined) {
-      el.innerHTML = md(content);
-      if (streaming) el.classList.add('streaming');
-      else           el.classList.remove('streaming');
-    }
-  });
-}
-
-async function generateGuide() {
-  if (generating) return;
-
-  if (!apiKey()) {
-    $('settings-panel').classList.add('open');
-    toast('Enter your Anthropic API key to continue.');
-    return;
-  }
-
-  const jd      = $('jd').value.trim();
-  const company = $('company-name').value.trim();
-  if (!jd)      { toast('Paste a job description to get started.'); return; }
-  if (!company) { toast('Enter the company name.'); return; }
-
-  const companyCtx = $('company-ctx').value.trim();
-  const iname      = $('iname').value.trim();
-  const ictx       = $('iname-ctx').value.trim();
-
-  generating = true;
-  guideText  = '';
-  chatHistory = [];
-
-  const btn = $('gen-btn');
-  btn.disabled = true;
-  $('gen-loading').classList.add('on');
-
-  const statuses = [
-    'Analyzing role requirements…',
-    'Researching company intelligence…',
-    'Building interviewer profile…',
-    'Drafting interview questions…',
-    'Finalizing prep guide…',
-  ];
-  let si = 0;
-  const tick = setInterval(() => {
-    si = (si + 1) % statuses.length;
-    $('gen-status').textContent = statuses[si];
-  }, 2200);
-
-  // Show skeleton
-  $('divider').classList.add('on');
-  $('guide-section').classList.add('on');
-  buildCards(company);
-  $('guide-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  try {
-    const res = await fetch('http://localhost:3000/api/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: apiKey(),
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        stream: true,
-        messages: [{ role: 'user', content: guidePrompt(jd, company, companyCtx, iname, ictx) }],
-      }),
-    });
-
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      throw new Error(e.error?.message || `API error ${res.status}`);
-    }
-
-    await readStream(res.body, chunk => {
-      guideText += chunk;
-      renderSections(parseSections(guideText), true);
-    });
-
-    renderSections(parseSections(guideText), false);
-    $('chat-section').classList.add('on');
-
-  } catch (err) {
-    // Keep any partial content that rendered; show error below
-    const partial = parseSections(guideText);
-    renderSections(partial, false);
-
-    const anyContent = Object.keys(partial).length > 0;
-    toast(`Error: ${err.message}${anyContent ? ' — partial guide shown above.' : ''}`);
-
-    if (!anyContent) {
-      $('cards').innerHTML =
-        `<div style="padding:20px;color:var(--red);font-family:var(--mono);font-size:12px;">
-           ${esc(err.message)}
-           <br><button class="retry-btn" onclick="generateGuide()">↺ Retry</button>
-         </div>`;
-    } else {
-      // Append retry below last card
-      $('cards').insertAdjacentHTML('beforeend',
-        `<div style="padding:16px 0;">
-           <button class="retry-btn" onclick="generateGuide()">↺ Retry to complete guide</button>
-         </div>`);
-    }
-  } finally {
-    clearInterval(tick);
-    $('gen-loading').classList.remove('on');
-    btn.disabled = false;
-    generating = false;
-  }
-}
-
-/* ── Stream reader with idle-timeout guard ── */
-async function readStream(body, onChunk) {
-  const reader  = body.getReader();
-  const decoder = new TextDecoder();
-  let   buf     = '';
-
-  const IDLE_MS = 30000;
-  let   idleTimer;
-  let   timedOut = false;
-
-  function resetIdle() {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      timedOut = true;
-      reader.cancel('idle timeout');
-    }, IDLE_MS);
-  }
-
-  resetIdle();
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      resetIdle();
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (raw === '[DONE]') continue;
-        let obj;
-        try { obj = JSON.parse(raw); } catch { continue; }
-        if (obj.type === 'content_block_delta' && obj.delta?.text) {
-          onChunk(obj.delta.text);
-        }
-      }
-    }
-  } finally {
-    clearTimeout(idleTimer);
-  }
-
-  if (timedOut) throw new Error('Stream idle timeout — partial response received');
-}
-
-/* ── Card helpers ── */
-function expandAll()  { document.querySelectorAll('.card').forEach(c => c.classList.add('open')); }
-function collapseAll(){ document.querySelectorAll('.card').forEach(c => c.classList.remove('open')); }
-
-function resetSession() {
-  if (!confirm('Clear this guide and start over?')) return;
-  guideText   = '';
-  chatHistory = [];
-  $('guide-section').classList.remove('on');
-  $('chat-section').classList.remove('on');
-  $('divider').classList.remove('on');
-  $('cards').innerHTML = '';
-  $('chat-msgs').innerHTML = `
-    <div class="msg ai">
-      <div class="msg-av">AI</div>
-      <div class="msg-body">
-        <div class="msg-role">Coach</div>
-        <div class="msg-text">Your prep guide is ready. Ask me anything about this role, company, or interviewer — or start a mock interview.</div>
-      </div>
-    </div>`;
-  ['jd','company-name','company-ctx','iname','iname-ctx'].forEach(id => $(id).value = '');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ================================================================
-   CHAT
-================================================================ */
-function systemPrompt() {
-  return `You are an elite executive career coach specializing in interview preparation. You have deep expertise in corporate strategy, hiring psychology, and career positioning.
-
-The user has generated the following interview prep guide. Use it as your knowledge base — every answer should be grounded in the specific role, company, and context below.
-
---- PREP GUIDE START ---
-${guideText}
---- PREP GUIDE END ---
-
-Your responsibilities:
-1. Answer questions about the company, role, interviewer, or preparation strategy — be specific, not generic.
-2. Run mock interviews: take on the interviewer's persona, ask questions one at a time, wait for responses, stay in character.
-3. Give structured feedback on answers: what works, what's weak or missing, what a sharp interviewer would probe next, concrete suggestions.
-4. Pressure-test answers: identify logic gaps, vague claims, missing metrics, or things that could backfire.
-5. Help with salary strategy, offer evaluation, or post-interview follow-up.
-
-Style: Direct. No filler. Think Goldman Sachs executive coach, not HR generalist. When giving feedback be honest, specific, and constructive — not cheerleading.`;
-}
-
-function appendMessage(role, html, streaming) {
-  const msgs = $('chat-msgs');
-  const wrap = document.createElement('div');
-  wrap.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
-  const id = `m${Date.now()}`;
-  wrap.innerHTML = `
-    <div class="msg-av">${role === 'user' ? 'YOU' : 'AI'}</div>
-    <div class="msg-body">
-      <div class="msg-role">${role === 'user' ? 'You' : 'Coach'}</div>
-      <div class="msg-text${streaming ? ' streaming' : ''}" id="${id}">${html}</div>
-    </div>`;
-  msgs.appendChild(wrap);
-  msgs.scrollTop = msgs.scrollHeight;
-  return id;
-}
-
-async function sendChat() {
-  if (chatting) return;
-  const input = $('chat-input');
-  const text  = input.value.trim();
-  if (!text) return;
-
-  if (!apiKey()) { toast('Enter your API key in settings.'); return; }
-
-  input.value = '';
-  input.style.height = 'auto';
-  chatHistory.push({ role: 'user', content: text });
-  appendMessage('user', md(text), false);
-
-  chatting = true;
-  $('chat-send').disabled = true;
-
-  const msgId = appendMessage('ai', '', true);
-  const msgEl = $(msgId);
-  let   reply = '';
-
-  try {
-    const res = await fetch('http://localhost:3000/api/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: apiKey(),
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: systemPrompt(),
-        messages: chatHistory,
-      }),
-    });
-
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      throw new Error(e.error?.message || `API error ${res.status}`);
-    }
-
-    await readStream(res.body, chunk => {
-      reply += chunk;
-      msgEl.innerHTML = md(reply);
-      msgEl.classList.add('streaming');
-      $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
-    });
-
-    msgEl.classList.remove('streaming');
-    msgEl.innerHTML = md(reply);
-    chatHistory.push({ role: 'assistant', content: reply });
-
-  } catch (err) {
-    msgEl.classList.remove('streaming');
-    if (reply) {
-      // partial response: show what we got + error note
-      msgEl.innerHTML = md(reply) +
-        `<p style="color:var(--red);margin-top:8px;font-size:12px;">⚠ ${esc(err.message)}</p>
-         <button class="retry-btn" onclick="retryLastChat()">↺ Retry</button>`;
-      chatHistory.push({ role: 'assistant', content: reply });
-    } else {
-      msgEl.innerHTML =
-        `<span style="color:var(--red)">${esc(err.message)}</span>
-         <br><button class="retry-btn" onclick="retryLastChat()">↺ Retry</button>`;
-      // remove the failed user message from history so retry works cleanly
-      chatHistory.pop();
-    }
-  } finally {
-    chatting = false;
-    $('chat-send').disabled = false;
-    $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
-  }
-}
-
-function retryLastChat() {
-  // Last history entry is the user message to re-send
-  const last = chatHistory[chatHistory.length - 1];
-  if (!last || last.role !== 'user') return;
-  // Remove the failed AI bubble (last child of chat-msgs that is .ai)
-  const msgs = $('chat-msgs');
-  const bubbles = msgs.querySelectorAll('.msg.ai');
-  if (bubbles.length) bubbles[bubbles.length - 1].remove();
-  // Re-send without re-adding user message
-  chatting = false;
-  $('chat-send').disabled = false;
-
-  // Trigger send with history already containing the user message
-  ;(async () => {
-    chatting = true;
-    $('chat-send').disabled = true;
-    const msgId = appendMessage('ai', '', true);
-    const msgEl = $(msgId);
-    let reply = '';
-    try {
-      const res = await fetch('http://localhost:3000/api/messages', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          apiKey: apiKey(),
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1024,
-          system: systemPrompt(),
-          messages: chatHistory,
-        }),
-      });
-      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `API error ${res.status}`); }
-      await readStream(res.body, chunk => {
-        reply += chunk;
-        msgEl.innerHTML = md(reply);
-        msgEl.classList.add('streaming');
-        $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
-      });
-      msgEl.classList.remove('streaming');
-      msgEl.innerHTML = md(reply);
-      chatHistory.push({ role: 'assistant', content: reply });
-    } catch (err) {
-      msgEl.classList.remove('streaming');
-      msgEl.innerHTML = `<span style="color:var(--red)">${esc(err.message)}</span>`;
-    } finally {
-      chatting = false;
-      $('chat-send').disabled = false;
-    }
-  })();
-}
-
-function chatKey(e)     { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
-function setInput(t)    { $('chat-input').value = t; grow($('chat-input')); $('chat-input').focus(); }
-function mockInterview(){ setInput("Start a mock interview. Play the interviewer for this role — ask one question at a time, wait for my response, then react before asking the next."); }
-function pressureTest() { setInput("Pressure test this answer — tell me what works, what's weak or missing, what a sharp interviewer would probe next, and how to improve it:\n\n[Paste your answer here]"); }
-</script>
-</body>
+<body><!-- JS and HTML added in subsequent stages --></body>
 </html>
