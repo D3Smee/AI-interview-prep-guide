@@ -1397,15 +1397,167 @@ function resetSession() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* placeholder stubs — replaced in stage 7 */
-function sendChat() {}
-function chatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
-function setInput(t) { $('chat-input').value = t; grow($('chat-input')); $('chat-input').focus(); }
-function mockInterview() {}
-function pressureTest() {}
+/* ── CHAT ────────────────────────────────────────────────────── */
+function systemPrompt() {
+  return `You are an elite executive career coach specializing in interview preparation. You have deep expertise in corporate strategy, hiring psychology, and career positioning.
+
+The user has generated the following interview prep guide. Use it as your knowledge base — every answer should be grounded in the specific role, company, and context below.
+
+--- PREP GUIDE START ---
+${guideText}
+--- PREP GUIDE END ---
+
+Your responsibilities:
+1. Answer questions about the company, role, interviewer, or prep strategy — be specific, not generic.
+2. Run mock interviews: take on the interviewer's persona, ask one question at a time, wait for responses, stay in character.
+3. Give structured feedback on answers: what works, what's weak, what a sharp interviewer would probe next.
+4. Pressure-test answers: identify logic gaps, vague claims, missing metrics.
+5. Help with salary strategy, offer evaluation, or post-interview follow-up.
+
+Style: Direct. No filler. Think Goldman Sachs executive coach, not HR generalist.`;
+}
+
+function appendMessage(role, html, streaming) {
+  const msgs = $('chat-msgs');
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
+  const id = `m${Date.now()}`;
+  wrap.innerHTML = `
+    <div class="msg-av">${role === 'user' ? 'YOU' : 'AI'}</div>
+    <div class="msg-body">
+      <div class="msg-role">${role === 'user' ? 'You' : 'Coach'}</div>
+      <div class="msg-text${streaming ? ' streaming' : ''}" id="${id}">${html}</div>
+    </div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+async function sendChat() {
+  if (chatting) return;
+  const input = $('chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  if (!apiKey()) { toast('Enter your API key in settings.'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+  chatHistory.push({ role: 'user', content: text });
+  appendMessage('user', md(text), false);
+
+  chatting = true;
+  $('chat-send').disabled = true;
+
+  const msgId = appendMessage('ai', '', true);
+  const msgEl = $(msgId);
+  let reply   = '';
+
+  try {
+    const res = await fetch('http://localhost:3000/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: apiKey(),
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: systemPrompt(),
+        messages: chatHistory,
+      }),
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `API error ${res.status}`);
+    }
+
+    await readStream(res.body, chunk => {
+      reply += chunk;
+      msgEl.innerHTML = md(reply);
+      msgEl.classList.add('streaming');
+      $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
+    });
+
+    msgEl.classList.remove('streaming');
+    msgEl.innerHTML = md(reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+
+  } catch (err) {
+    msgEl.classList.remove('streaming');
+    if (reply) {
+      msgEl.innerHTML = md(reply) +
+        `<p style="color:var(--red);margin-top:8px;font-size:12px;">⚠ ${esc(err.message)}</p>
+         <button class="retry-btn" onclick="retryChat()">↺ Retry</button>`;
+      chatHistory.push({ role: 'assistant', content: reply });
+    } else {
+      msgEl.innerHTML =
+        `<span style="color:var(--red)">${esc(err.message)}</span>
+         <br><button class="retry-btn" onclick="retryChat()">↺ Retry</button>`;
+      chatHistory.pop();
+    }
+  } finally {
+    chatting = false;
+    $('chat-send').disabled = false;
+    $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
+  }
+}
+
+function retryChat() {
+  const last = chatHistory[chatHistory.length - 1];
+  if (!last || last.role !== 'user') return;
+  const bubbles = $('chat-msgs').querySelectorAll('.msg.ai');
+  if (bubbles.length) bubbles[bubbles.length - 1].remove();
+  chatting = false;
+  $('chat-send').disabled = false;
+
+  ;(async () => {
+    chatting = true;
+    $('chat-send').disabled = true;
+    const msgId = appendMessage('ai', '', true);
+    const msgEl = $(msgId);
+    let reply = '';
+    try {
+      const res = await fetch('http://localhost:3000/api/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: apiKey(),
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          system: systemPrompt(),
+          messages: chatHistory,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error?.message || `API error ${res.status}`);
+      }
+      await readStream(res.body, chunk => {
+        reply += chunk;
+        msgEl.innerHTML = md(reply);
+        msgEl.classList.add('streaming');
+        $('chat-msgs').scrollTop = $('chat-msgs').scrollHeight;
+      });
+      msgEl.classList.remove('streaming');
+      msgEl.innerHTML = md(reply);
+      chatHistory.push({ role: 'assistant', content: reply });
+    } catch (err) {
+      msgEl.classList.remove('streaming');
+      msgEl.innerHTML = `<span style="color:var(--red)">${esc(err.message)}</span>`;
+    } finally {
+      chatting = false;
+      $('chat-send').disabled = false;
+    }
+  })();
+}
+
+function chatKey(e)      { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
+function setInput(t)     { $('chat-input').value = t; grow($('chat-input')); $('chat-input').focus(); }
+function mockInterview() { setInput('Start a mock interview. Play the interviewer for this role — ask one question at a time, wait for my response, then react before asking the next.'); }
+function pressureTest()  { setInput('Pressure test this answer — tell me what works, what\'s weak, and what a sharp interviewer would probe next:\n\n[Paste your answer here]'); }
 
 /* ── INIT ────────────────────────────────────────────────────── */
 loadSavedKey();
+renderHistBadge();
 </script>
 </body>
 </html>
