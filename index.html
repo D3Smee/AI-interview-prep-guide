@@ -1151,11 +1151,253 @@ function closeHistory() {
   $('h-overlay').classList.remove('on');
 }
 
-/* placeholder stubs — replaced in later stages */
-function generateGuide() {}
-function expandAll() {}
-function collapseAll() {}
-function resetSession() {}
+/* ── GUIDE GENERATION ────────────────────────────────────────── */
+const SECTIONS = [
+  { key: 'COMPANY SNAPSHOT',           n: '01', title: 'Company Snapshot' },
+  { key: 'ROLE BREAKDOWN',             n: '02', title: 'Role Breakdown' },
+  { key: 'INTERVIEWER INTEL',          n: '03', title: 'Interviewer Intel' },
+  { key: 'LIKELY INTERVIEW QUESTIONS', n: '04', title: 'Likely Interview Questions' },
+  { key: 'YOUR TALKING POINTS',        n: '05', title: 'Your Talking Points' },
+  { key: 'RECOMMENDED READING',        n: '06', title: 'Recommended Reading' },
+];
+
+function guidePrompt(jd, company, companyCtx, iname, ictx) {
+  return `You are an elite executive career coach and corporate intelligence analyst helping someone prepare for a job interview.
+
+INPUT:
+- Job Description: ${jd}
+- Company: ${company}
+- Company Context: ${companyCtx || 'Not provided'}
+- Interviewer Name: ${iname || 'Not provided'}
+- Interviewer Context: ${ictx || 'Not provided'}
+
+Write a comprehensive, specific interview prep guide using EXACTLY these six section headers:
+
+## COMPANY SNAPSHOT
+What the company does, business model, stage (startup/growth/public/PE-backed), key products, culture signals, recent news. Include 2–3 markdown links to sources or useful searches.
+
+## ROLE BREAKDOWN
+What this role truly requires beyond the JD text, the skills that will determine success, realistic day-to-day, the candidate archetype they want, any unspoken requirements or red flags.
+
+## INTERVIEWER INTEL
+${iname
+  ? `Based on "${iname}"${ictx ? ` and context: "${ictx}"` : ''}: infer their background, what they care about, how to build rapport, what impresses vs. annoys this type.`
+  : 'No interviewer named. Provide guidance on what types of interviewers appear at this kind of company/role and universal rapport tactics.'}
+
+## LIKELY INTERVIEW QUESTIONS
+8–10 specific questions for THIS role and company. Format each as:
+**[BEHAVIORAL]** Question — *what they're really testing*
+**[TECHNICAL]** Question — *what they're really testing*
+**[SITUATIONAL]** Question — *what they're really testing*
+
+## YOUR TALKING POINTS
+4–5 specific narrative themes to weave into answers. For each: what to emphasize, why it matters, and a one-line natural intro.
+
+## RECOMMENDED READING
+5–7 specific resources as a numbered markdown list with links.
+
+Tone: direct, intelligence-briefing style. No filler. Every line earns its place.`;
+}
+
+function buildCards(company) {
+  $('cards').innerHTML = SECTIONS.map((s, idx) => `
+    <div class="card ${idx === 0 ? 'open' : ''}" id="card-${idx}">
+      <div class="card-hd" onclick="this.parentElement.classList.toggle('open')">
+        <div class="card-hd-left">
+          <span class="card-n">${s.n}</span>
+          <span class="card-title">${s.title}</span>
+        </div>
+        <span class="card-chev">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="md streaming" id="sec-${idx}">
+          <p style="color:var(--t3)">Generating…</p>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function parseSections(text) {
+  const pat = /## (COMPANY SNAPSHOT|ROLE BREAKDOWN|INTERVIEWER INTEL|LIKELY INTERVIEW QUESTIONS|YOUR TALKING POINTS|RECOMMENDED READING)/g;
+  const matches = [...text.matchAll(pat)];
+  const result  = {};
+  matches.forEach((m, idx) => {
+    const start = m.index + m[0].length;
+    const end   = idx + 1 < matches.length ? matches[idx + 1].index : text.length;
+    result[m[1]] = text.slice(start, end).trim();
+  });
+  return result;
+}
+
+function renderSections(sections, streaming) {
+  SECTIONS.forEach((s, idx) => {
+    const el = $(`sec-${idx}`);
+    if (!el || sections[s.key] === undefined) return;
+    el.innerHTML = md(sections[s.key]);
+    el.classList.toggle('streaming', streaming);
+  });
+}
+
+async function generateGuide() {
+  if (generating) return;
+
+  if (!apiKey()) {
+    $('settings-panel').classList.add('on');
+    toast('Enter your Anthropic API key to continue.');
+    return;
+  }
+
+  const jd      = $('jd').value.trim();
+  const company = $('company-name').value.trim();
+  if (!jd)      { toast('Paste a job description to get started.'); return; }
+  if (!company) { toast('Enter the company name.'); return; }
+
+  const companyCtx = $('company-ctx').value.trim();
+  const iname      = $('iname').value.trim();
+  const ictx       = $('iname-ctx').value.trim();
+
+  generating  = true;
+  guideText   = '';
+  chatHistory = [];
+
+  const btn = $('gen-btn');
+  btn.disabled = true;
+  $('gen-loader').classList.add('on');
+
+  const statuses = [
+    'Analyzing role requirements…',
+    'Researching company intelligence…',
+    'Building interviewer profile…',
+    'Drafting interview questions…',
+    'Finalizing brief…',
+  ];
+  let si = 0;
+  const tick = setInterval(() => {
+    si = (si + 1) % statuses.length;
+    $('gen-status').textContent = statuses[si];
+  }, 2200);
+
+  $('divider').classList.add('on');
+  $('guide-section').classList.add('on');
+  buildCards(company);
+  $('guide-company').textContent = company;
+  $('guide-meta').textContent    = formatDate(new Date().toISOString());
+  $('guide-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const res = await fetch('http://localhost:3000/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: apiKey(),
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        stream: true,
+        messages: [{ role: 'user', content: guidePrompt(jd, company, companyCtx, iname, ictx) }],
+      }),
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `API error ${res.status}`);
+    }
+
+    await readStream(res.body, chunk => {
+      guideText += chunk;
+      renderSections(parseSections(guideText), true);
+    });
+
+    renderSections(parseSections(guideText), false);
+    histAdd(company, jd, guideText);
+    $('chat-section').classList.add('on');
+
+  } catch (err) {
+    const partial = parseSections(guideText);
+    renderSections(partial, false);
+    const hasPartial = Object.keys(partial).length > 0;
+    toast(`Error: ${err.message}${hasPartial ? ' — partial guide shown.' : ''}`);
+
+    if (!hasPartial) {
+      $('cards').innerHTML = `
+        <div style="padding:20px;color:var(--red);font-family:var(--mono);font-size:11px;">
+          ${esc(err.message)}
+          <br><button class="retry-btn" onclick="generateGuide()">↺ Retry</button>
+        </div>`;
+    } else {
+      $('cards').insertAdjacentHTML('beforeend',
+        `<div style="padding:16px 0;">
+           <button class="retry-btn" onclick="generateGuide()">↺ Retry to complete</button>
+         </div>`);
+    }
+  } finally {
+    clearInterval(tick);
+    $('gen-loader').classList.remove('on');
+    btn.disabled = false;
+    generating   = false;
+  }
+}
+
+async function readStream(body, onChunk) {
+  const reader  = body.getReader();
+  const decoder = new TextDecoder();
+  let   buf     = '';
+  let   timedOut = false;
+  let   idleTimer;
+
+  function resetIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      timedOut = true;
+      reader.cancel('idle timeout');
+    }, 30000);
+  }
+  resetIdle();
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      resetIdle();
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') continue;
+        let obj;
+        try { obj = JSON.parse(raw); } catch { continue; }
+        if (obj.type === 'content_block_delta' && obj.delta?.text) onChunk(obj.delta.text);
+      }
+    }
+  } finally { clearTimeout(idleTimer); }
+
+  if (timedOut) throw new Error('Stream idle timeout — partial response received');
+}
+
+function expandAll()  { document.querySelectorAll('.card').forEach(c => c.classList.add('open')); }
+function collapseAll(){ document.querySelectorAll('.card').forEach(c => c.classList.remove('open')); }
+
+function resetSession() {
+  if (!confirm('Clear this session and start over?')) return;
+  guideText = ''; chatHistory = [];
+  $('guide-section').classList.remove('on');
+  $('chat-section').classList.remove('on');
+  $('divider').classList.remove('on');
+  $('cards').innerHTML = '';
+  $('chat-msgs').innerHTML = `
+    <div class="msg ai">
+      <div class="msg-av">AI</div>
+      <div class="msg-body">
+        <div class="msg-role">Coach</div>
+        <div class="msg-text">Your brief is ready. Ask me anything about this role, company, or interviewer — or start a mock interview.</div>
+      </div>
+    </div>`;
+  ['jd','company-name','company-ctx','iname','iname-ctx'].forEach(id => $(id).value = '');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* placeholder stubs — replaced in stage 7 */
 function sendChat() {}
 function chatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
 function setInput(t) { $('chat-input').value = t; grow($('chat-input')); $('chat-input').focus(); }
